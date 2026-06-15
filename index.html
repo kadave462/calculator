@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKOL Rwanda Payroll Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #0d1b4b 0%, #1a3a8f 100%);
+    color: #fff;
+    padding: 22px 32px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  }
+  header .logo {
+    width: 48px; height: 48px;
+    background: #fff;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 18px; color: #0d1b4b;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 1.45rem; font-weight: 700; letter-spacing: .4px; }
+  header p  { font-size: .82rem; opacity: .75; margin-top: 2px; }
+
+  /* ── Layout ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* ── Mode toggle ── */
+  .mode-bar {
+    display: flex; gap: 0; margin-bottom: 26px;
+    border-radius: 10px; overflow: hidden;
+    box-shadow: 0 1px 6px rgba(0,0,0,.12);
+    width: fit-content;
+  }
+  .mode-btn {
+    padding: 11px 28px; font-size: .92rem; font-weight: 600;
+    border: none; cursor: pointer; transition: background .2s, color .2s;
+    background: #fff; color: #666;
+  }
+  .mode-btn.active { background: #1a3a8f; color: #fff; }
+  .mode-btn:first-child { border-radius: 10px 0 0 10px; }
+  .mode-btn:last-child  { border-radius: 0 10px 10px 0; }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  }
+  .card h2 {
+    font-size: .78rem; font-weight: 700; letter-spacing: 1.1px;
+    text-transform: uppercase; color: #888;
+    margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  /* ── Form grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: .78rem; font-weight: 600; color: #555; }
+  .field input, .field select {
+    padding: 9px 12px; border: 1.5px solid #dde1ea;
+    border-radius: 8px; font-size: .9rem; background: #fafbff;
+    transition: border-color .2s, box-shadow .2s; outline: none;
+  }
+  .field input:focus, .field select:focus {
+    border-color: #1a3a8f;
+    box-shadow: 0 0 0 3px rgba(26,58,143,.1);
+  }
+
+  /* radio groups */
+  .radio-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+  .radio-group label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .88rem; font-weight: 400; color: #333; cursor: pointer;
+    padding: 7px 14px;
+    border: 1.5px solid #dde1ea; border-radius: 8px;
+    background: #fafbff; transition: border-color .2s, background .2s;
+  }
+  .radio-group input[type=radio] { accent-color: #1a3a8f; }
+  .radio-group label:has(input:checked) {
+    border-color: #1a3a8f; background: #eef1fb;
+  }
+
+  /* ── Main input highlight ── */
+  .primary-input input {
+    background: #fffbe6; border-color: #f0c040; font-size: 1.05rem; font-weight: 600;
+  }
+  .primary-input label { font-size: .82rem; font-weight: 700; color: #333; }
+
+  /* ── Button ── */
+  .btn-calc {
+    width: 100%; padding: 14px; font-size: 1rem; font-weight: 700;
+    background: linear-gradient(135deg, #1a3a8f, #2756cc);
+    color: #fff; border: none; border-radius: 10px; cursor: pointer;
+    letter-spacing: .5px; box-shadow: 0 3px 12px rgba(26,58,143,.35);
+    transition: transform .1s, box-shadow .1s;
+  }
+  .btn-calc:hover  { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(26,58,143,.4); }
+  .btn-calc:active { transform: translateY(0); }
+
+  /* ── Results ── */
+  #results { display: none; }
+  #results.show { display: block; }
+
+  .result-salbase {
+    background: linear-gradient(135deg, #1a3a8f, #2756cc);
+    color: #fff; border-radius: 12px; padding: 20px 24px;
+    margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .result-salbase .label { font-size: .85rem; opacity: .8; }
+  .result-salbase .value { font-size: 1.6rem; font-weight: 800; }
+
+  .result-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  .result-table th {
+    background: #f5f6fa; color: #555; font-size: .73rem;
+    letter-spacing: .8px; text-transform: uppercase;
+    padding: 10px 14px; text-align: left; border-bottom: 2px solid #e8eaf0;
+  }
+  .result-table td { padding: 9px 14px; border-bottom: 1px solid #f0f2f5; }
+  .result-table td:last-child { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* row colour coding */
+  .row-input   { background: #fffde7; }
+  .row-formula { background: #f0faf2; }
+  .row-employer{ background: #fff3f3; }
+  .row-divider td { background: #1a3a8f; color: #fff; font-weight: 700; font-size: .82rem; }
+  .row-divider td:last-child { color: #ffd; }
+
+  .legend {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-size: .75rem; color: #666; margin-top: 12px;
+  }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+  .dot-input   { background: #f9e400; }
+  .dot-formula { background: #43c15f; }
+  .dot-employer{ background: #f87171; }
+
+  /* ── Error banner ── */
+  .error-banner {
+    background: #fff0f0; border: 1.5px solid #f87171;
+    border-radius: 10px; padding: 14px 18px;
+    color: #c0392b; font-size: .9rem; margin-bottom: 18px;
+    display: none;
+  }
+  .error-banner.show { display: block; }
+
+  @media (max-width: 520px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    header h1 { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SK</div>
+  <div>
+    <h1>SKOL Rwanda &mdash; Payroll Calculator</h1>
+    <p>Forward calculation &amp; reverse SALBASE solver</p>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- mode toggle -->
+  <div class="mode-bar">
+    <button class="mode-btn active" id="btnForward" onclick="setMode('forward')">Forward &mdash; SALBASE &rarr; NET SAL</button>
+    <button class="mode-btn"        id="btnReverse" onclick="setMode('reverse')">Reverse &mdash; NET SAL &rarr; SALBASE</button>
+  </div>
+
+  <!-- primary input card -->
+  <div class="card">
+    <h2 id="primaryLabel">Base Salary</h2>
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="field primary-input">
+        <label id="primaryFieldLabel">SALBASE (RWF)</label>
+        <input type="number" id="salbase" placeholder="e.g. 300000" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>ANC &mdash; Seniority bonus (RWF)</label>
+        <input type="number" id="anc" value="0" min="0" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- transport + insurance -->
+  <div class="card">
+    <h2>Transport &amp; Insurance</h2>
+    <div class="grid">
+      <div class="field">
+        <label>Transport type</label>
+        <div class="radio-group">
+          <label><input type="radio" name="transport" value="cash" checked> Cash</label>
+          <label><input type="radio" name="transport" value="in-kind"> In-kind (TRANS NAT)</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>Insurance split (employee / employer)</label>
+        <div class="radio-group">
+          <label><input type="radio" name="split" value="0/100" checked> 0% / 100%</label>
+          <label><input type="radio" name="split" value="35/65"> 35% / 65%</label>
+          <label><input type="radio" name="split" value="none"> Not insured</label>
+        </div>
+      </div>
+      <div class="field" id="insBaseField">
+        <label>Insurance premium base (RWF)</label>
+        <div class="radio-group">
+          <label><input type="radio" name="insBase" value="123664" checked> 123,664</label>
+          <label><input type="radio" name="insBase" value="158526"> 158,526</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- allowances -->
+  <div class="card">
+    <h2>Allowances (enter 0 if not applicable)</h2>
+    <div class="grid">
+      <div class="field">
+        <label>HOUSE KEEPING (RWF)</label>
+        <input type="number" id="houseKeeping" value="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>HS &mdash; Overtime (RWF)</label>
+        <input type="number" id="hs" value="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>PRIMES &mdash; Bonus (RWF)</label>
+        <input type="number" id="primes" value="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>PRIMEFONCTION (RWF)</label>
+        <input type="number" id="primefonction" value="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>REGURALISATION (RWF)</label>
+        <input type="number" id="reguralisation" value="0" min="0" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- deductions -->
+  <div class="card">
+    <h2>Deductions (enter 0 if not applicable)</h2>
+    <div class="grid">
+      <div class="field">
+        <label>RESTAURANT (RWF) &mdash; 450 &times; days</label>
+        <input type="number" id="restaurant" value="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>PRET VEHICULE &mdash; Car loan instalment (RWF)</label>
+        <input type="number" id="pretVehicule" value="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>BRD loan active?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="loan" value="no" checked> No</label>
+          <label><input type="radio" name="loan" value="yes" onclick="toggleLoan(true)"> Yes (auto 8%)</label>
+        </div>
+      </div>
+      <div class="field" id="rbstField">
+        <label>RBST SFAR (RWF) &mdash; manual</label>
+        <input type="number" id="rbstSfar" value="0" min="0" step="1">
+      </div>
+      <div class="field">
+        <label>AUTRES AVANCES (RWF)</label>
+        <input type="number" id="autresAvances" value="0" min="0" step="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- action -->
+  <div class="card" style="padding:18px 24px;">
+    <button class="btn-calc" onclick="onCalculate()">CALCULATE</button>
+  </div>
+
+  <!-- error -->
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- results -->
+  <div id="results">
+    <div class="result-salbase" id="resultHero">
+      <div>
+        <div class="label" id="heroLabel">NET SAL</div>
+        <div class="value" id="heroValue">—</div>
+      </div>
+      <div style="text-align:right">
+        <div class="label" id="heroLabel2">SALBASE</div>
+        <div class="value" id="heroValue2">—</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th style="text-align:right">Amount (RWF)</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+      </table>
+    </div>
+
+    <div class="legend">
+      <span><span class="dot dot-input"></span> Manual input</span>
+      <span><span class="dot dot-formula"></span> Formula / calculated</span>
+      <span><span class="dot dot-employer"></span> Employer cost only (not deducted from employee)</span>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// ─── Mode ───────────────────────────────────────────────────────────────────
+let mode = 'forward';
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnForward').classList.toggle('active', m === 'forward');
+  document.getElementById('btnReverse').classList.toggle('active', m === 'reverse');
+  if (m === 'forward') {
+    document.getElementById('primaryLabel').textContent = 'Base Salary';
+    document.getElementById('primaryFieldLabel').textContent = 'SALBASE (RWF)';
+    document.getElementById('salbase').placeholder = 'e.g. 300000';
+  } else {
+    document.getElementById('primaryLabel').textContent = 'Target NET SAL';
+    document.getElementById('primaryFieldLabel').textContent = 'Target NET SAL (RWF)';
+    document.getElementById('salbase').placeholder = 'e.g. 200000';
+  }
+  hideResults();
+}
+
+// ─── UI helpers ──────────────────────────────────────────────────────────────
+function toggleLoan(active) {
+  document.getElementById('rbstField').style.opacity = active ? '.4' : '1';
+  document.getElementById('rbstSfar').disabled = active;
+  if (active) document.getElementById('rbstSfar').value = 0;
+}
+
+document.querySelectorAll('input[name=loan]').forEach(r =>
+  r.addEventListener('change', () => toggleLoan(r.value === 'yes' && r.checked))
+);
+
+document.querySelectorAll('input[name=split]').forEach(r =>
+  r.addEventListener('change', () => {
+    document.getElementById('insBaseField').style.opacity = r.value === 'none' ? '.35' : '1';
+    document.querySelectorAll('input[name=insBase]').forEach(x => x.disabled = r.value === 'none');
+  })
+);
+
+function hideResults() {
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('errorBanner').classList.remove('show');
+}
+
+function showError(msg) {
+  const b = document.getElementById('errorBanner');
+  b.textContent = msg;
+  b.classList.add('show');
+  document.getElementById('results').classList.remove('show');
+}
+
+// ─── Number helpers ───────────────────────────────────────────────────────────
+const fmt = v => v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+function g(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function radio(name) { return document.querySelector(`input[name=${name}]:checked`)?.value ?? null; }
+
+// ─── Payroll engine ───────────────────────────────────────────────────────────
+function tprCalc(btpr) {
+  if (btpr <= 60000)  return 0;
+  if (btpr <= 100000) return (btpr - 60000) * 0.10;
+  if (btpr <= 200000) return 4000 + (btpr - 100000) * 0.20;
+  return 24000 + (btpr - 200000) * 0.30;
+}
+
+function insuranceCalc(split, base) {
+  if (split === 'none')  return [0, 0];
+  if (split === '0/100') return [0, base];
+  return [base * 0.35, base * 0.65];
+}
+
+function calculate(salbase, opts) {
+  const { anc, transportType, split, insBase,
+          houseKeeping, hs, primes, primefonction, reguralisation,
+          restaurant, pretVehicule, rbstSfarManual, loanActive, autresAvances } = opts;
+
+  const logement  = salbase * 0.15;
+  const transport = transportType === 'cash'    ? salbase * 0.10 : 0;
+  const transNat  = transportType === 'in-kind' ? salbase * 0.10 : 0;
+
+  const [ass40, ass60] = insuranceCalc(split, insBase);
+  const assMal = ass60;
+
+  const rbstSfar = loanActive ? (salbase + transport + logement) * 0.08 : rbstSfarManual;
+
+  const brut = salbase + anc + logement + transport
+             + houseKeeping + hs + primes + primefonction + reguralisation;
+  const bcsr = brut - transport;
+  const btpr = brut + transNat + assMal;
+
+  const rssbE   = bcsr * 0.003;
+  const rssbP   = bcsr * 0.023;
+  const tprVal  = tprCalc(btpr);
+  const pensionE = btpr * 0.06;
+  const pensionP = btpr * 0.06;
+  const cbhi    = (brut - rssbE - tprVal - pensionE) * 0.005;
+
+  const netSal = brut - rssbE - tprVal - cbhi - pensionE
+               - ass40 - restaurant - pretVehicule - rbstSfar - autresAvances;
+
+  const totalEmployer = btpr * 1.06 + bcsr * 0.023;
+
+  return { logement, transport, transNat, assMal, brut, bcsr, btpr,
+           rssbE, rssbP, tprVal, pensionE, pensionP, cbhi,
+           ass40, ass60, rbstSfar, netSal, totalEmployer };
+}
+
+function reverseCalc(targetNet, opts) {
+  let lo = 0, hi = 50_000_000;
+  const net = s => calculate(s, opts).netSal;
+
+  const netLo = net(lo), netHi = net(hi);
+  if (targetNet < netLo)
+    throw `Target ${fmt(targetNet)} is below the minimum achievable NET SAL (${fmt(netLo)}) at SALBASE = 0.`;
+  if (targetNet > netHi)
+    throw `Target ${fmt(targetNet)} exceeds the maximum NET SAL (${fmt(netHi)}) at SALBASE = 50,000,000.`;
+
+  let mid = lo;
+  for (let i = 0; i < 80; i++) {
+    mid = (lo + hi) / 2;
+    const nm = net(mid);
+    if (Math.abs(nm - targetNet) < 0.01) break;
+    nm < targetNet ? (lo = mid) : (hi = mid);
+  }
+  return mid;
+}
+
+// ─── Render results ───────────────────────────────────────────────────────────
+function renderResults(salbase, r, opts) {
+  const rows = [
+    // [label, value, rowClass]
+    ['INPUTS', null, 'divider'],
+    ['SALBASE',            salbase,             'input'],
+    ['ANC',                opts.anc,             'input'],
+    ['HOUSE KEEPING (N)',  opts.houseKeeping,    'input'],
+    ['HS — Overtime (O)',  opts.hs,              'input'],
+    ['PRIMES (P)',         opts.primes,          'input'],
+    ['PRIMEFONCTION (Q)',  opts.primefonction,   'input'],
+    ['REGURALISATION (R)', opts.reguralisation,  'input'],
+    ['RESTAURANT (AE)',    opts.restaurant,      'input'],
+    ['PRET VEHICULE (AF)', opts.pretVehicule,    'input'],
+    ['AUTRES AVANCES (AH)',opts.autresAvances,   'input'],
+
+    ['FORMULA COLUMNS', null, 'divider'],
+    ['LOGEMENT (K) = 15% × SALBASE',   r.logement,   'formula'],
+    ['TRANSPORT (L) = 10% × SALBASE',  r.transport,  'formula'],
+    ['TRANS NAT (M) = 10% × SALBASE',  r.transNat,   'formula'],
+    ['ASS MAL (S) = ASS 60',           r.assMal,     'formula'],
+    ['BRUT (T)',                        r.brut,       'formula'],
+    ['BCSR (U) = BRUT − TRANSPORT',    r.bcsr,       'formula'],
+    ['BTPR (X) = BRUT + TRANS NAT + ASS MAL', r.btpr, 'formula'],
+    ['RSSB 0.3% employee (V)',          r.rssbE,      'formula'],
+    ['TPR (Y) — progressive tax',       r.tprVal,     'formula'],
+    ['PENSION E 6% (AA)',               r.pensionE,   'formula'],
+    ['CBHI (Z)',                        r.cbhi,       'formula'],
+    ['ASS 40 — employee share (AC)',    r.ass40,      'formula'],
+    ['RBST SFAR (AG)',                  r.rbstSfar,   'formula'],
+
+    ['EMPLOYER-ONLY (never deducted from employee)', null, 'divider'],
+    ['RSSB 2.3% employer (W)',          r.rssbP,      'employer'],
+    ['PENSION P 6% (AB)',               r.pensionP,   'employer'],
+    ['ASS 60 — employer share (AD)',    r.ass60,      'employer'],
+
+    ['TOTALS', null, 'divider'],
+    ['NET SAL (AI)',                    r.netSal,     'formula'],
+    ['Total employer cost',             r.totalEmployer, 'employer'],
+  ];
+
+  const classMap = {
+    input:    'row-input',
+    formula:  'row-formula',
+    employer: 'row-employer',
+    divider:  'row-divider',
+  };
+
+  const tbody = document.getElementById('resultBody');
+  tbody.innerHTML = '';
+  rows.forEach(([label, val, cls]) => {
+    const tr = document.createElement('tr');
+    tr.className = classMap[cls] || '';
+    if (cls === 'divider') {
+      tr.innerHTML = `<td colspan="2">${label}</td>`;
+    } else {
+      tr.innerHTML = `<td>${label}</td><td>${fmt(val)} RWF</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+
+  // hero bar
+  document.getElementById('heroLabel').textContent  = 'NET SAL';
+  document.getElementById('heroValue').textContent  = fmt(r.netSal) + ' RWF';
+  document.getElementById('heroLabel2').textContent = 'SALBASE';
+  document.getElementById('heroValue2').textContent = fmt(salbase) + ' RWF';
+
+  document.getElementById('errorBanner').classList.remove('show');
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─── Main calculate handler ───────────────────────────────────────────────────
+function onCalculate() {
+  document.getElementById('errorBanner').classList.remove('show');
+
+  const transportType = radio('transport');
+  const split         = radio('split');
+  const insBase       = split === 'none' ? 0 : parseFloat(radio('insBase'));
+  const loanActive    = radio('loan') === 'yes';
+
+  const opts = {
+    anc:            g('anc'),
+    transportType,
+    split,
+    insBase,
+    houseKeeping:   g('houseKeeping'),
+    hs:             g('hs'),
+    primes:         g('primes'),
+    primefonction:  g('primefonction'),
+    reguralisation: g('reguralisation'),
+    restaurant:     g('restaurant'),
+    pretVehicule:   g('pretVehicule'),
+    rbstSfarManual: g('rbstSfar'),
+    loanActive,
+    autresAvances:  g('autresAvances'),
+  };
+
+  const primaryVal = g('salbase');
+
+  if (!primaryVal && primaryVal !== 0) {
+    showError('Please enter a value in the primary field.');
+    return;
+  }
+
+  try {
+    if (mode === 'forward') {
+      const r = calculate(primaryVal, opts);
+      renderResults(primaryVal, r, opts);
+    } else {
+      const salbase = reverseCalc(primaryVal, opts);
+      const r       = calculate(salbase, opts);
+      renderResults(salbase, r, opts);
+    }
+  } catch (err) {
+    showError(typeof err === 'string' ? err : err.message);
+  }
+}
+
+// allow Enter key to trigger calculate
+document.addEventListener('keydown', e => { if (e.key === 'Enter') onCalculate(); });
+</script>
+</body>
+</html>
