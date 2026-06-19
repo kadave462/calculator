@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E.M.P Ltd — SIEGE Payroll (Period 5/2026)</title>
+<style>
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#222637;--border:#2e3350;
+  --text:#e2e8f0;--muted:#8892b0;--accent:#64ffda;--yellow:#ffd166;
+  --orange:#f4845f;--pink:#e879f9;--blue:#60a5fa;--green:#4ade80;
+  --red:#f87171;--purple:#c084fc;--radius:10px;
+  --font-mono:'Fira Code','Cascadia Code','Consolas',monospace;
+  --font-sans:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;padding-bottom:60px;}
+
+/* HEADER */
+header{background:linear-gradient(135deg,#1a1d27 0%,#0f1117 60%);border-bottom:1px solid var(--border);padding:28px 40px 22px;}
+header h1{font-size:1.8rem;font-weight:700;color:var(--accent);letter-spacing:-0.5px;}
+header p{color:var(--muted);margin-top:5px;font-size:0.9rem;}
+.badge{display:inline-block;background:#1e2940;border:1px solid var(--blue);color:var(--blue);font-size:0.7rem;font-family:var(--font-mono);padding:2px 8px;border-radius:20px;margin-top:8px;margin-right:5px;}
+
+.container{max-width:1400px;margin:0 auto;padding:0 20px;}
+
+/* SEARCH */
+.search-wrap{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:14px 20px;}
+.search-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:14px;}
+.search-box{position:relative;flex:1;max-width:500px;}
+.search-box input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.95rem;padding:10px 16px;border-radius:8px;outline:none;transition:border-color .2s;}
+.search-box input:focus{border-color:var(--accent);}
+.search-box input::placeholder{color:var(--muted);}
+.suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:200;overflow:hidden;display:none;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.sug-item{padding:10px 16px;cursor:pointer;font-size:0.88rem;display:flex;justify-content:space-between;align-items:center;}
+.sug-item:hover,.sug-item.active{background:var(--surface2);}
+.sug-item .sug-name{color:var(--text);}
+.sug-item .sug-net{color:var(--accent);font-family:var(--font-mono);font-size:0.8rem;}
+.search-hint{font-size:0.78rem;color:var(--muted);}
+
+/* EMPLOYEE CARD */
+#empCard{display:none;margin:24px 20px;max-width:1400px;margin-left:auto;margin-right:auto;}
+.card-header{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--radius) var(--radius) 0 0;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.card-header h2{font-size:1.2rem;color:var(--accent);}
+.card-body{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:24px;}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:800px){.card-grid{grid-template-columns:1fr;}}
+.card-section-title{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.card-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(46,51,80,.4);}
+.card-row:last-child{border-bottom:none;}
+.card-label{font-size:0.83rem;color:var(--muted);}
+.card-value{font-family:var(--font-mono);font-size:0.85rem;}
+.card-value.deduct{color:var(--red);}
+.card-value.emp-cost{color:var(--yellow);}
+.card-value.total{color:var(--accent);font-size:0.95rem;font-weight:700;}
+.card-value.net{color:var(--purple);font-size:1.1rem;font-weight:700;}
+.card-value.bank{color:var(--blue);}
+.tpr-box{background:var(--surface2);border-radius:8px;overflow:hidden;margin-top:8px;}
+.tpr-box-title{padding:7px 12px;font-size:0.7rem;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);border-bottom:1px solid var(--border);}
+
+/* PILL */
+.pill{display:inline-block;font-size:0.68rem;font-family:var(--font-mono);padding:1px 7px;border-radius:20px;margin:1px;border:1px solid;}
+.pill-blue{color:var(--blue);border-color:var(--blue);background:rgba(96,165,250,.08);}
+.pill-green{color:var(--green);border-color:var(--green);background:rgba(74,222,128,.08);}
+.pill-yellow{color:var(--yellow);border-color:var(--yellow);background:rgba(255,209,102,.08);}
+.pill-orange{color:var(--orange);border-color:var(--orange);background:rgba(244,132,95,.08);}
+.pill-red{color:var(--red);border-color:var(--red);background:rgba(248,113,113,.08);}
+.pill-accent{color:var(--accent);border-color:var(--accent);background:rgba(100,255,218,.08);}
+
+/* SECTION TITLE */
+.section-title{font-size:1.1rem;font-weight:700;color:var(--yellow);margin:32px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.section-title::before{content:'';display:block;width:4px;height:20px;background:var(--yellow);border-radius:2px;}
+
+/* PAYROLL TABLE */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:32px;}
+.payroll-table{border-collapse:collapse;font-size:0.75rem;white-space:nowrap;min-width:2200px;}
+.payroll-table th{background:var(--surface2);padding:7px 10px;text-align:right;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;z-index:10;}
+.payroll-table th.col-info{color:var(--blue);text-align:left;}
+.payroll-table th.col-emp-cost{color:var(--yellow);}
+.payroll-table th.col-deduct{color:var(--red);}
+.payroll-table th.col-base{color:var(--accent);}
+.payroll-table th.col-net{color:var(--purple);}
+.payroll-table th.col-bank{color:var(--blue);}
+.payroll-table th:first-child{text-align:center;}
+/* sub-header row */
+.payroll-table .sub-hdr th{font-size:0.62rem;color:var(--muted);font-weight:400;background:#1c1f2e;padding:3px 10px;border-bottom:1px solid var(--border);}
+.payroll-table td{padding:7px 10px;border-bottom:1px solid rgba(46,51,80,.4);border-right:1px solid rgba(46,51,80,.25);text-align:right;vertical-align:middle;}
+.payroll-table td.left{text-align:left;}
+.payroll-table td.center{text-align:center;}
+.payroll-table tr:hover td{background:rgba(255,255,255,.025);cursor:pointer;}
+.payroll-table tr.selected td{background:rgba(100,255,218,.06);}
+.payroll-table .col-employer td{color:var(--yellow);}
+.val-red{color:var(--red);}
+.val-accent{color:var(--accent);font-weight:600;}
+.val-purple{color:var(--purple);font-weight:700;}
+.val-yellow{color:var(--yellow);}
+.total-row td{background:var(--surface2)!important;font-weight:700;border-top:2px solid var(--border);}
+
+/* FORMULA REFERENCE */
+.formula-banner{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 22px;margin:20px 0;}
+.formula-banner h3{font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;}
+.fml{font-family:var(--font-mono);font-size:0.88rem;line-height:2;}
+.fml .kw{color:var(--blue);}
+.fml .var{color:var(--accent);}
+.fml .op{color:var(--pink);}
+.fml .num{color:var(--yellow);}
+.fml .fn{color:var(--orange);}
+.fml .cm{color:var(--muted);font-style:italic;}
+
+/* STEP FLOW */
+.steps{display:flex;flex-direction:column;gap:0;margin:20px 0;}
+.step{display:flex;gap:0;align-items:stretch;position:relative;}
+.step:not(:last-child)::after{content:'';position:absolute;left:27px;bottom:-28px;width:2px;height:28px;background:var(--border);}
+.step-num{flex-shrink:0;width:56px;display:flex;flex-direction:column;align-items:center;padding-top:18px;}
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;border:2px solid;flex-shrink:0;}
+.step-body{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:28px;overflow:hidden;}
+.step-head{padding:14px 18px;display:flex;align-items:center;gap:12px;}
+.step-head-text h3{font-size:0.95rem;font-weight:600;margin-bottom:2px;}
+.step-head-text p{font-size:0.78rem;color:var(--muted);font-family:var(--font-mono);}
+.step-content{padding:0 18px 16px;border-top:1px solid var(--border);}
+/* step color themes */
+.s1 .step-circle{color:var(--blue);border-color:var(--blue);}
+.s1 .step-head{border-left:3px solid var(--blue);}
+.s1 .step-head-text h3{color:var(--blue);}
+.s2 .step-circle{color:var(--accent);border-color:var(--accent);}
+.s2 .step-head{border-left:3px solid var(--accent);}
+.s2 .step-head-text h3{color:var(--accent);}
+.s3 .step-circle{color:var(--red);border-color:var(--red);}
+.s3 .step-head{border-left:3px solid var(--red);}
+.s3 .step-head-text h3{color:var(--red);}
+.s4 .step-circle{color:var(--pink);border-color:var(--pink);}
+.s4 .step-head{border-left:3px solid var(--pink);}
+.s4 .step-head-text h3{color:var(--pink);}
+.s5 .step-circle{color:var(--orange);border-color:var(--orange);}
+.s5 .step-head{border-left:3px solid var(--orange);}
+.s5 .step-head-text h3{color:var(--orange);}
+.s6 .step-circle{color:var(--purple);border-color:var(--purple);}
+.s6 .step-head{border-left:3px solid var(--purple);}
+.s6 .step-head-text h3{color:var(--purple);}
+.s7 .step-circle{color:var(--yellow);border-color:var(--yellow);}
+.s7 .step-head{border-left:3px solid var(--yellow);}
+.s7 .step-head-text h3{color:var(--yellow);}
+.formula-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(46,51,80,.35);font-size:0.85rem;flex-wrap:wrap;gap:6px;}
+.formula-row:last-child{border-bottom:none;}
+.formula-row .fl{color:var(--muted);}
+.formula-row .fr{font-family:var(--font-mono);font-size:0.82rem;}
+.tpr-brackets{margin-top:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.tpr-brackets table{margin:0;width:100%;border-collapse:collapse;font-size:0.82rem;}
+.tpr-brackets th{background:var(--surface2);color:var(--muted);font-size:0.7rem;text-transform:uppercase;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border);}
+.tpr-brackets td{padding:8px 12px;border-bottom:1px solid rgba(46,51,80,.3);}
+.tpr-brackets tr:last-child td{border-bottom:none;}
+.sum-box{background:rgba(192,132,252,.07);border:1px solid rgba(192,132,252,.3);border-radius:8px;padding:16px 18px;margin-top:8px;}
+.sum-box .sum-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:0.85rem;}
+.sum-box .sum-row.deduct .sr-val{color:var(--red);}
+.sum-box .sum-row .sr-label{color:var(--muted);}
+.sum-box .sum-row .sr-val{font-family:var(--font-mono);}
+.sum-box hr{border:none;border-top:1px solid rgba(192,132,252,.3);margin:8px 0;}
+.sum-box .final-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0 0;}
+.sum-box .final-row .sr-label{color:var(--purple);font-weight:700;font-size:0.95rem;}
+.sum-box .final-row .sr-val{color:var(--purple);font-family:var(--font-mono);font-size:1.1rem;font-weight:700;}
+
+/* CODE BLOCK */
+.code-block{background:#0d0f19;border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--font-mono);font-size:0.8rem;line-height:1.7;overflow-x:auto;margin:10px 0;}
+.code-block .cm{color:#546e7a;font-style:italic;}
+.code-block .acc{color:var(--accent);font-weight:600;}
+.code-block .var{color:#eeffff;}
+.code-block .num{color:#f78c6c;}
+.code-block .op{color:var(--pink);}
+.code-block .fn{color:#82aaff;}
+
+/* CALLOUT */
+.callout{border-radius:8px;padding:12px 16px;font-size:0.85rem;line-height:1.6;margin:10px 0;border-left:3px solid;}
+.callout-info{background:rgba(96,165,250,.08);border-color:var(--blue);color:#a0c4ff;}
+.callout-warn{background:rgba(255,209,102,.08);border-color:var(--yellow);color:#ffd166;}
+.callout-success{background:rgba(74,222,128,.08);border-color:var(--green);color:#86efac;}
+
+/* TABLE (reference) */
+table.ref{width:100%;border-collapse:collapse;font-size:0.82rem;margin:10px 0;}
+table.ref th{background:var(--surface2);color:var(--muted);font-size:0.7rem;text-transform:uppercase;letter-spacing:.7px;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);}
+table.ref td{padding:8px 12px;border-bottom:1px solid rgba(46,51,80,.4);}
+table.ref td code{font-family:var(--font-mono);font-size:0.75rem;color:var(--accent);background:rgba(100,255,218,.07);padding:1px 4px;border-radius:3px;}
+
+/* CALCULATOR */
+.calculator{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:24px 0;}
+.calculator h2{font-size:1rem;font-weight:600;color:var(--accent);margin-bottom:18px;}
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:18px;}
+.calc-field label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:5px;}
+.calc-field input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:0.9rem;padding:9px 12px;border-radius:6px;outline:none;transition:border-color .2s;}
+.calc-field input:focus{border-color:var(--accent);}
+.btn{padding:9px 20px;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;border:none;transition:opacity .2s,transform .1s;}
+.btn:hover{opacity:.85;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--accent);color:#0f1117;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+.calc-result{display:none;margin-top:20px;border-top:1px solid var(--border);padding-top:18px;}
+.calc-result.visible{display:block;}
+.res-table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+.res-table td{padding:7px 12px;border-bottom:1px solid rgba(46,51,80,.4);}
+.res-table td:first-child{color:var(--muted);}
+.res-table td:last-child{font-family:var(--font-mono);font-weight:600;text-align:right;}
+.res-hi td{background:rgba(100,255,218,.06)!important;}
+.res-hi td:last-child{color:var(--accent);}
+.res-net td{background:rgba(192,132,252,.06)!important;}
+.res-net td:last-child{color:var(--purple);font-size:1rem;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>E.M.P Ltd — SIEGE Payroll</h1>
+    <p>Forward net salary calculation · All 34 employees · Period 5 / 2026 · Chantier 001 SIEGE</p>
+    <div style="margin-top:8px;">
+      <span class="badge">E.M.P Ltd · B.P 1127 KIGALI</span>
+      <span class="badge">LISTE DE PAIE DU PERSONNEL : CADRE</span>
+      <span class="badge">RSSB 6%+2% employer</span>
+      <span class="badge">TPR Progressive</span>
+      <span class="badge">Mituel 0.5%</span>
+    </div>
+  </div>
+</header>
+
+<!-- SEARCH -->
+<div class="search-wrap">
+  <div class="search-inner">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Type employee name to see salary details…" autocomplete="off"/>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+    <span class="search-hint">↑ Search or click any row in the table below</span>
+    <button class="btn btn-ghost" onclick="clearCard()" style="font-size:0.78rem;padding:6px 14px;">Clear</button>
+  </div>
+</div>
+
+<!-- EMPLOYEE DETAIL CARD -->
+<div id="empCard">
+  <div class="card-header">
+    <div>
+      <h2 id="cardName"></h2>
+      <div id="cardBadges" style="margin-top:6px;"></div>
+    </div>
+    <div id="cardNetBig" style="font-family:var(--font-mono);font-size:1.6rem;color:var(--purple);font-weight:700;"></div>
+  </div>
+  <div class="card-body">
+    <div class="card-grid">
+      <!-- Left column -->
+      <div>
+        <div class="card-section-title">Identity &amp; Contract</div>
+        <div id="cardIdentity"></div>
+
+        <div class="card-section-title" style="margin-top:18px;">Salary Base</div>
+        <div id="cardBase"></div>
+
+        <div class="card-section-title" style="margin-top:18px;">TPR Bracket Breakdown</div>
+        <div class="tpr-box">
+          <div class="tpr-box-title">Progressive tax on Base TPR</div>
+          <table class="ref" id="cardTPR" style="margin:0;"></table>
+        </div>
+      </div>
+      <!-- Right column -->
+      <div>
+        <div class="card-section-title">Employee Deductions (subtracted from Base TPR)</div>
+        <div id="cardDeductions"></div>
+
+        <div class="card-section-title" style="margin-top:18px;">Employer Contributions (not deducted from employee)</div>
+        <div id="cardEmployer"></div>
+
+        <div class="card-section-title" style="margin-top:18px;">Bank Transfer Details</div>
+        <div id="cardBank"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ══════════════════════════════════════════════════
+       SECTION 1 — FORWARD CALCULATION (step by step)
+       ══════════════════════════════════════════════════ -->
+  <div class="section-title">Forward Calculation — How to Get to Sal.Net</div>
+
+  <div class="callout callout-info" style="margin-bottom:24px;">
+    Read top to bottom. Each step feeds the next. All percentages apply to <strong>Base TPR (col M)</strong> — not to Sal.Base directly. The only exception is Mituel, which uses a sub-total after the statutory deductions.
+  </div>
+
+  <div class="steps">
+
+    <!-- STEP 1 -->
+    <div class="step s1">
+      <div class="step-num"><div class="step-circle">1</div></div>
+      <div class="step-body">
+        <div class="step-head">
+          <div class="step-head-text">
+            <h3>Sal.Base — The Starting Point</h3>
+            <p>Col J · Input from contract &nbsp;|&nbsp; Col K · J.Trav. (working days) &nbsp;|&nbsp; Col L · Div.Tax. (taxable supplement)</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="formula-row">
+            <span class="fl">Sal.Base (col J)</span>
+            <span class="fr" style="color:var(--blue);">Fixed monthly amount from employment contract</span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">J.Trav. (col K)</span>
+            <span class="fr" style="color:var(--blue);">Number of working days — 31 for all SIEGE staff</span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">Div.Tax. (col L)</span>
+            <span class="fr" style="color:var(--blue);">Taxable supplement — <strong>0</strong> for all current SIEGE employees</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step s2">
+      <div class="step-num"><div class="step-circle">2</div></div>
+      <div class="step-body">
+        <div class="step-head">
+          <div class="step-head-text">
+            <h3>Base TPR — The Tax Base (col M)</h3>
+            <p>Col M = J + L &nbsp;·&nbsp; Every deduction is calculated from this number</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="formula-row">
+            <span class="fl"><strong>Base TPR</strong> = Sal.Base + Div.Tax.</span>
+            <span class="fr" style="color:var(--accent);">Excel: <code style="color:var(--accent);">=J+L</code></span>
+          </div>
+          <div class="callout callout-success" style="margin-top:10px;font-size:0.82rem;">
+            Because Div.Tax. = 0 for all SIEGE employees, <strong>Base TPR = Sal.Base</strong> in every case. The distinction only matters if a taxable supplement is ever added in col L.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step s3">
+      <div class="step-num"><div class="step-circle">3</div></div>
+      <div class="step-body">
+        <div class="step-head">
+          <div class="step-head-text">
+            <h3>Statutory Deductions on Base TPR — Employee pays</h3>
+            <p>Cols N, O, P · Calculated automatically from Base TPR · Always deducted</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="formula-row">
+            <span class="fl">RSSB 6% employee pension &nbsp;<span class="pill pill-red">col O</span></span>
+            <span class="fr" style="color:var(--red);">= Base TPR × 6% &nbsp;·&nbsp; Excel: <code style="color:var(--red);">=M*6/100</code></span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">RSSB 0.3% employee medical &nbsp;<span class="pill pill-red">col P</span></span>
+            <span class="fr" style="color:var(--red);">= Base TPR × 0.3% &nbsp;·&nbsp; Excel: <code style="color:var(--red);">=M*0.3/100</code></span>
+          </div>
+          <div class="formula-row" style="padding-bottom:14px;">
+            <span class="fl">TPR — Tax on Professional Revenue &nbsp;<span class="pill pill-red">col N</span></span>
+            <span class="fr" style="color:var(--red);">Progressive rate on Base TPR (see brackets below)</span>
+          </div>
+          <div class="tpr-brackets">
+            <table>
+              <thead><tr><th>Base TPR range (RWF)</th><th>Rate</th><th>Tax in this bracket</th><th>Excel formula segment</th></tr></thead>
+              <tbody>
+                <tr><td>0 – 60,000</td><td><span class="pill pill-green">0%</span></td><td>0</td><td><code style="color:var(--muted);">IF(M&lt;=60000, 0, …)</code></td></tr>
+                <tr><td>60,001 – 100,000</td><td><span class="pill pill-yellow">10%</span></td><td>(M − 60,000) × 10%</td><td><code style="color:var(--muted);">(M-60000)*10%</code></td></tr>
+                <tr><td>100,001 – 200,000</td><td><span class="pill pill-orange">20%</span></td><td>4,000 + (M − 100,000) × 20%</td><td><code style="color:var(--muted);">((M-100000)*20%)+4000</code></td></tr>
+                <tr style="background:rgba(248,113,113,.06);"><td>Above 200,000</td><td><span class="pill pill-red">30%</span></td><td>24,000 + (M − 200,000) × 30%</td><td><code style="color:var(--muted);">((M-200000)*30%)+24000</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;background:var(--surface2);border-radius:6px;padding:10px 14px;font-family:var(--font-mono);font-size:0.78rem;color:var(--muted);">
+            Full Excel formula (col N): <span style="color:var(--red);">=IF(M&lt;=60000,0,IF(AND(M&gt;60000,M&lt;=100000),(M-60000)*10%,IF(AND(M&gt;100001,M&lt;=200000),((M-100000)*20%)+4000,((M-200000)*30%)+24000)))</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step s4">
+      <div class="step-num"><div class="step-circle">4</div></div>
+      <div class="step-body">
+        <div class="step-head">
+          <div class="step-head-text">
+            <h3>Mituel 0.5% — Community Health Insurance (col Q)</h3>
+            <p>Calculated on the salary that remains after Steps 2 &amp; 3 — not directly on Base TPR</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="formula-row">
+            <span class="fl">Mituel base = Base TPR − TPR − RSSB 6% − RSSB 0.3%</span>
+            <span class="fr" style="color:var(--pink);">(M − N − O − P)</span>
+          </div>
+          <div class="formula-row">
+            <span class="fl"><strong>Mituel 0.5%</strong> = Mituel base × 0.5%</span>
+            <span class="fr" style="color:var(--pink);">Excel: <code style="color:var(--pink);">=(M-N-O-P)*0.5/100</code></span>
+          </div>
+          <div class="callout callout-warn" style="margin-top:10px;font-size:0.82rem;">
+            Mituel is applied <strong>after</strong> the statutory RSSB and income tax are removed. This avoids a circular calculation — the community health deduction is taken from what is left, not from the gross.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step s5">
+      <div class="step-num"><div class="step-circle">5</div></div>
+      <div class="step-body">
+        <div class="step-head">
+          <div class="step-head-text">
+            <h3>Other Variable Deductions — Input per employee</h3>
+            <p>Cols R, S, T, U, V · Fixed amounts entered manually — varies per person</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="formula-row">
+            <span class="fl">Cot.Twis. &nbsp;<span class="pill pill-orange">col R</span></span>
+            <span class="fr" style="color:var(--orange);">Monthly savings contribution to Twis fund — fixed amount</span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">Remb.Tw. &nbsp;<span class="pill pill-orange">col S</span></span>
+            <span class="fr" style="color:var(--orange);">Monthly repayment of a Twis loan</span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">Cot.Social &nbsp;<span class="pill pill-orange">col T</span></span>
+            <span class="fr" style="color:var(--orange);">Social contribution — specific scheme</span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">Avance &nbsp;<span class="pill pill-orange">col U</span></span>
+            <span class="fr" style="color:var(--orange);">Salary advance recovery — amount already paid to employee earlier</span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">Assur. &nbsp;<span class="pill pill-orange">col V</span></span>
+            <span class="fr" style="color:var(--orange);">Insurance premium deduction</span>
+          </div>
+          <div class="callout callout-info" style="margin-top:10px;font-size:0.82rem;">
+            These are all <strong>input</strong> values — there is no formula. The HR manager enters the correct amount for each employee each month. If none apply, the cell is blank (treated as 0).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step s6">
+      <div class="step-num"><div class="step-circle">6</div></div>
+      <div class="step-body">
+        <div class="step-head">
+          <div class="step-head-text">
+            <h3>Sal.Net — Final Take-Home Salary (col W)</h3>
+            <p>=ROUND((M−N−O−P−Q−R−S−T−U−V), 0) · Rounded to nearest whole RWF</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="sum-box">
+            <div class="sum-row"><span class="sr-label">Base TPR &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col M</span></span><span class="sr-val" style="color:var(--accent);">+</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− TPR (income tax) &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col N</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− RSSB 6% employee pension &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col O</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− RSSB 0.3% employee medical &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col P</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− Mituel 0.5% community health &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col Q</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− Cot.Twis. (savings) &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col R</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− Remb.Tw. (loan repayment) &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col S</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− Cot.Social &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col T</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− Avance (advance recovery) &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col U</span></span><span class="sr-val">−</span></div>
+            <div class="sum-row deduct"><span class="sr-label">− Assur. (insurance) &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">col V</span></span><span class="sr-val">−</span></div>
+            <hr/>
+            <div class="final-row"><span class="sr-label">= Sal.Net &nbsp;<span style="font-family:var(--font-mono);font-size:0.75rem;">col W = ROUND(M−N−O−P−Q−R−S−T−U−V, 0)</span></span><span class="sr-val">= ?</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 — EMPLOYER (side note) -->
+    <div class="step s7">
+      <div class="step-num"><div class="step-circle">★</div></div>
+      <div class="step-body">
+        <div class="step-head">
+          <div class="step-head-text">
+            <h3>Employer RSSB Contributions — NOT deducted from employee</h3>
+            <p>Cols F, G, H · Company's own cost · Tracked for reporting only</p>
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="formula-row">
+            <span class="fl">RSSB 6% employer pension &nbsp;<span class="pill pill-yellow">col F</span></span>
+            <span class="fr" style="color:var(--yellow);">= Base TPR × 6% &nbsp;·&nbsp; Excel: <code style="color:var(--yellow);">=M*6/100</code></span>
+          </div>
+          <div class="formula-row">
+            <span class="fl">Hasard 2% occupational hazard &nbsp;<span class="pill pill-yellow">col G</span></span>
+            <span class="fr" style="color:var(--yellow);">= Base TPR × 2% &nbsp;·&nbsp; Excel: <code style="color:var(--yellow);">=M*2/100</code></span>
+          </div>
+          <div class="formula-row">
+            <span class="fl"><strong>TOTAL RSSB 8%</strong> &nbsp;<span class="pill pill-yellow">col H</span></span>
+            <span class="fr" style="color:var(--yellow);">= col F + col G &nbsp;·&nbsp; Excel: <code style="color:var(--yellow);">=F+G</code></span>
+          </div>
+          <div class="callout callout-warn" style="margin-top:10px;font-size:0.82rem;">
+            These three columns appear in the sheet so the company can track its total payroll cost. They are <strong>never subtracted from Sal.Net</strong>. The employee does not see this deduction — the employer pays it separately to RSSB.
+          </div>
+          <div class="callout callout-info" style="font-size:0.82rem;">
+            <strong>Note on col I (RSSB 0.3%):</strong> Between the employer block (F, G, H) and Sal.Base (J), the sheet has a col I also labelled "RSSB 0.3%". It has the same value as col P and uses the same formula <code>=M*0.3/100</code>. It is a <strong>reference / display column only</strong> — it does not appear in the Sal.Net formula and is not deducted anywhere.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .steps -->
+
+  <!-- ══════════════════════════════════════════════════
+       SECTION 2 — LIVE CALCULATOR
+       ══════════════════════════════════════════════════ -->
+  <div class="section-title">Live Forward Calculator</div>
+  <div class="calculator">
+    <h2>&#9654; Calculate Net Salary — E.M.P Ltd SIEGE</h2>
+    <div class="calc-grid">
+      <div class="calc-field"><label>Sal.Base (RWF) — Col J</label><input type="number" id="cSalBase" placeholder="e.g. 392540"></div>
+      <div class="calc-field"><label>Div.Tax. (RWF) — Col L (usually 0)</label><input type="number" id="cDivTax" value="0"></div>
+      <div class="calc-field"><label>Cot.Twis. (RWF) — Col R</label><input type="number" id="cCotTwis" value="0"></div>
+      <div class="calc-field"><label>Remb.Tw. (RWF) — Col S</label><input type="number" id="cRembTw" value="0"></div>
+      <div class="calc-field"><label>Cot.Social (RWF) — Col T</label><input type="number" id="cCotSocial" value="0"></div>
+      <div class="calc-field"><label>Avance (RWF) — Col U</label><input type="number" id="cAvance" value="0"></div>
+      <div class="calc-field"><label>Assur. (RWF) — Col V</label><input type="number" id="cAssur" value="0"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="calcNet()">Calculate</button>
+      <button class="btn btn-ghost" onclick="resetCalc()">Reset</button>
+    </div>
+    <div class="calc-result" id="calcResult">
+      <table class="res-table" id="resTable"></table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SECTION 3 — PAYROLL TABLE (last)
+       ══════════════════════════════════════════════════ -->
+  <div class="section-title">SIEGE Payroll Table — All Employees</div>
+  <p style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Click any row to see the full salary breakdown above. Scroll right to see all columns.</p>
+  <div class="table-wrap">
+    <table class="payroll-table" id="payrollTable">
+      <thead>
+        <tr>
+          <th class="col-info" style="text-align:center;">N°</th>
+          <th class="col-info" style="text-align:left;">Nom</th>
+          <th class="col-info" style="text-align:left;">Prenom</th>
+          <th class="col-info">N°Affil.</th>
+          <th class="col-info">ID</th>
+          <th class="col-emp-cost">RSSB 6%</th>
+          <th class="col-emp-cost">Hasard 2%</th>
+          <th class="col-emp-cost">TOTAL RSSB 8%</th>
+          <th class="col-deduct">RSSB 0.3%</th>
+          <th class="col-base">Sal.Base</th>
+          <th class="col-info">J.Trav.</th>
+          <th class="col-info">Div.Tax.</th>
+          <th class="col-base">Base TPR</th>
+          <th class="col-deduct">TPR</th>
+          <th class="col-deduct">RSSB 6%</th>
+          <th class="col-deduct">RSSB 0.3%</th>
+          <th class="col-deduct">Mituel 0.5%</th>
+          <th class="col-deduct">Cot.Twis.</th>
+          <th class="col-deduct">Remb.Tw.</th>
+          <th class="col-deduct">Cot.Social</th>
+          <th class="col-deduct">Avance</th>
+          <th class="col-deduct">Assur.</th>
+          <th class="col-net">Sal.Net</th>
+          <th class="col-bank" style="text-align:left;">BENEFICIARY NAME</th>
+          <th class="col-bank" style="text-align:left;">BANK NAME</th>
+          <th class="col-bank">BENEFICIARY ACCOUNT NUMBER</th>
+          <th class="col-net">CREDIT AMOUNT (RWF)</th>
+        </tr>
+        <tr class="sub-hdr">
+          <th></th><th></th><th></th><th></th><th></th>
+          <th>Employer</th><th>Employer</th><th>Employer total</th>
+          <th>Col I · ref</th>
+          <th>Col J</th><th>Col K</th><th>Col L</th>
+          <th>Col M = J+L</th>
+          <th>Col N</th><th>Col O · employee</th><th>Col P · employee</th><th>Col Q</th>
+          <th>Col R</th><th>Col S</th><th>Col T</th><th>Col U</th><th>Col V</th>
+          <th>Col W = ROUND(M-N-O-P-Q-R-S-T-U-V,0)</th>
+          <th>Col AC</th><th>Col AD</th><th>Col AE</th><th>Col AF</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</div><!-- end container -->
+
+<script>
+// ─────────────────────────────────────────────
+//  EMPLOYEE DATA — from SAL.5 2026 EMPLTD ejabo.xls · SIEGE sheet
+//  Fields follow exact SIEGE column order: A→AF
+// ─────────────────────────────────────────────
+const EMP = [
+  {no:1,  nom:"ABIZEYE",          prenom:"OSCAR",              nAffil:"20261119J",  id:"1197780004901193", rssb6f:15101,  hasard:5034,   rssb8h:20135,  rssb03i:755,   salBase:251684,  jTrav:31, divTax:0, baseTPR:251684,  tpr:39505,  rssb6o:15101,  rssb03p:755,   mituel:982,   cotTwis:10000, rembTw:0,      cotSocial:0, avance:25000, assur:0, salNet:160341,  benefName:"ABIZEYE OSCAR",              bank:"EQUITY BANK",  account:"4005211236069",       credit:160341},
+  {no:2,  nom:"DUSHIMIMANA",      prenom:"JEAN PAUL",          nAffil:"10367637Y",  id:"1198380027670123", rssb6f:23552,  hasard:7851,   rssb8h:31403,  rssb03i:1178,  salBase:392540,  jTrav:31, divTax:0, baseTPR:392540,  tpr:81762,  rssb6o:23552,  rssb03p:1178,  mituel:1430,  cotTwis:10000, rembTw:26000,  cotSocial:0, avance:0,     assur:0, salNet:248618,  benefName:"DUSHIMIMANA JEAN PAUL",       bank:"BK Ltd",       account:"000630777688061",     credit:248618},
+  {no:3,  nom:"GIHOZO",           prenom:"DJAFARI",            nAffil:"19781384E",  id:"1199880008496122", rssb6f:91274,  hasard:30425,  rssb8h:121699, rssb03i:4564,  salBase:1521233, jTrav:31, divTax:0, baseTPR:1521233, tpr:420370, rssb6o:91274,  rssb03p:4564,  mituel:5025,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:1000000, benefName:"GIHOZO DJAFARI",              bank:"BK Ltd",       account:"002896700050720",     credit:1000000},
+  {no:4,  nom:"HABAMUNGU",        prenom:"JANVIER",            nAffil:"10462492N",  id:"1198580020801218", rssb6f:25065,  hasard:8355,   rssb8h:33420,  rssb03i:1253,  salBase:417749,  jTrav:31, divTax:0, baseTPR:417749,  tpr:89325,  rssb6o:25065,  rssb03p:1253,  mituel:1511,  cotTwis:50000, rembTw:57200,  cotSocial:0, avance:0,     assur:0, salNet:193396,  benefName:"HABAMUNGU JANVIER",           bank:"BK Ltd",       account:"000400698825425",     credit:193396},
+  {no:5,  nom:"HABARUREMA",       prenom:"ASSOUMAN",           nAffil:"20103088D",  id:"1198380006536046", rssb6f:12728,  hasard:4243,   rssb8h:16970,  rssb03i:636,   salBase:212130,  jTrav:31, divTax:0, baseTPR:212130,  tpr:27639,  rssb6o:12728,  rssb03p:636,   mituel:856,   cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:170271,  benefName:"HABARUREMA ASSOUMAN",         bank:"EQUITY BANK",  account:"4003100903103",       credit:170271},
+  {no:6,  nom:"HABYARIMANA",      prenom:"FRANCOIS",           nAffil:"10373927S",  id:"1197380013703024", rssb6f:14382,  hasard:4794,   rssb8h:19176,  rssb03i:719,   salBase:239699,  jTrav:31, divTax:0, baseTPR:239699,  tpr:35910,  rssb6o:14382,  rssb03p:719,   mituel:943,   cotTwis:50000, rembTw:31200,  cotSocial:0, avance:0,     assur:0, salNet:106545,  benefName:"HABYARIMANA FRANCOIS",        bank:"BK Ltd",       account:"000590062917245",     credit:106545},
+  {no:7,  nom:"HAGENIMANA",       prenom:"BLAISE",             nAffil:"11166188C",  id:"1198480189169358", rssb6f:72341,  hasard:24114,  rssb8h:96455,  rssb03i:3617,  salBase:1205683, jTrav:31, divTax:0, baseTPR:1205683, tpr:325705, rssb6o:72341,  rssb03p:3617,  mituel:4020,  cotTwis:20000, rembTw:275000, cotSocial:0, avance:0,     assur:0, salNet:505000,  benefName:"HAGENIMANA BLAISE",           bank:"EQUITY BANK",  account:"4010111217075",       credit:505000},
+  {no:8,  nom:"KAMANA",           prenom:"EMMANUEL",           nAffil:"10227215",   id:"1197780017562471", rssb6f:24594,  hasard:8198,   rssb8h:32792,  rssb03i:1230,  salBase:409897,  jTrav:31, divTax:0, baseTPR:409897,  tpr:86969,  rssb6o:24594,  rssb03p:1230,  mituel:1486,  cotTwis:160000,rembTw:50000,  cotSocial:0, avance:0,     assur:0, salNet:85619,   benefName:"KAMANA EMMANUEL",             bank:"BK Ltd",       account:"000400030302429",     credit:85619},
+  {no:9,  nom:"KAGESERA",         prenom:"Paulin",             nAffil:"10462700X",  id:"1198380164843356", rssb6f:72341,  hasard:24114,  rssb8h:96455,  rssb03i:3617,  salBase:1205683, jTrav:31, divTax:0, baseTPR:1205683, tpr:325705, rssb6o:72341,  rssb03p:3617,  mituel:4020,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:800000,  benefName:"KAGESERA Paulin",             bank:"BANK OF AFRICA",account:"01406580000",         credit:800000},
+  {no:10, nom:"KANEZA",           prenom:"OLIVE",              nAffil:"10163550",   id:"1197570001737061", rssb6f:64854,  hasard:21618,  rssb8h:86472,  rssb03i:3243,  salBase:1080894, jTrav:31, divTax:0, baseTPR:1080894, tpr:288268, rssb6o:64854,  rssb03p:3243,  mituel:3623,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:720907,  benefName:"KANEZA OLIVE",               bank:"BK Ltd",       account:"000400069015230",     credit:720907},
+  {no:11, nom:"KANYANKORE",       prenom:"VIRGILE",            nAffil:"10515994L",  id:"1198480025328041", rssb6f:12728,  hasard:4243,   rssb8h:16970,  rssb03i:636,   salBase:212130,  jTrav:31, divTax:0, baseTPR:212130,  tpr:27639,  rssb6o:12728,  rssb03p:636,   mituel:856,   cotTwis:10000, rembTw:35000,  cotSocial:0, avance:0,     assur:0, salNet:125271,  benefName:"KANYANKORE VIRGILE",          bank:"EQUITY BANK",  account:"4012111347145",       credit:125271},
+  {no:12, nom:"KAYIRANGA MUHUZA", prenom:"DIDIER",             nAffil:"19341718B",  id:"1199180005027016", rssb6f:100680, hasard:33560,  rssb8h:134240, rssb03i:5034,  salBase:1677997, jTrav:31, divTax:0, baseTPR:1677997, tpr:467399, rssb6o:100680, rssb03p:5034,  mituel:5524,  cotTwis:50000, rembTw:43333,  cotSocial:0, avance:0,     assur:0, salNet:1006027, benefName:"KAYIRANGA MUHUZA DIDIER",     bank:"BK Ltd",       account:"000400693310367",     credit:1006027},
+  {no:13, nom:"MUBILIGI",         prenom:"JEANNE FRANCOISE",   nAffil:"10430863B",  id:"1198070010880003", rssb6f:154968, hasard:51656,  rssb8h:206624, rssb03i:7748,  salBase:2582797, jTrav:31, divTax:0, baseTPR:2582797, tpr:738839, rssb6o:154968, rssb03p:7748,  mituel:8406,  cotTwis:50000, rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:1622835, benefName:"MUBILIGI JEANNE FRANCOISE",   bank:"I&M BANK",     account:"0001050417400191",    credit:1622835},
+  {no:14, nom:"MUKUNDENTE",       prenom:"CYIZA CLAUDINE",     nAffil:"10746400A",  id:"1198770023326078", rssb6f:31853,  hasard:10618,  rssb8h:42471,  rssb03i:1593,  salBase:530890,  jTrav:31, divTax:0, baseTPR:530890,  tpr:123267, rssb6o:31853,  rssb03p:1593,  mituel:1871,  cotTwis:20000, rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:352306,  benefName:"MUKUNDENTE CYIZA CLAUDINE",   bank:"EQUITY BANK",  account:"4005100563307",       credit:352306},
+  {no:15, nom:"MUNYARUKUNDO",     prenom:"FRANCOIS",           nAffil:"00389784",   id:"1196380007880029", rssb6f:22221,  hasard:7407,   rssb8h:29627,  rssb03i:1111,  salBase:370343,  jTrav:31, divTax:0, baseTPR:370343,  tpr:75103,  rssb6o:22221,  rssb03p:1111,  mituel:1360,  cotTwis:5000,  rembTw:40000,  cotSocial:0, avance:0,     assur:0, salNet:225549,  benefName:"MUNYARUKUNDO FRANCOIS",       bank:"BPR",          account:"403289775411",        credit:225549},
+  {no:16, nom:"MUTABAZI",         prenom:"JEAN CLAUDE",        nAffil:"10140602",   id:"1197380001391015", rssb6f:49467,  hasard:16489,  rssb8h:65956,  rssb03i:2473,  salBase:824446,  jTrav:31, divTax:0, baseTPR:824446,  tpr:211334, rssb6o:49467,  rssb03p:2473,  mituel:2806,  cotTwis:15000, rembTw:31200,  cotSocial:0, avance:0,     assur:0, salNet:512166,  benefName:"MUTABAZI JEAN CLAUDE",        bank:"BPR",          account:"403289368811",        credit:512166},
+  {no:17, nom:"MVUNABANDI",       prenom:"JEAN BAPTISTE",      nAffil:"10363950A",  id:"1197780013296012", rssb6f:26400,  hasard:8800,   rssb8h:35200,  rssb03i:1320,  salBase:440002,  jTrav:31, divTax:0, baseTPR:440002,  tpr:96001,  rssb6o:26400,  rssb03p:1320,  mituel:1581,  cotTwis:5000,  rembTw:31200,  cotSocial:0, avance:0,     assur:0, salNet:278500,  benefName:"MVUNABANDI JEAN BAPTISTE",    bank:"BK Ltd",       account:"000680063690126",     credit:278500},
+  {no:18, nom:"MWEMA",            prenom:"Faustin",            nAffil:"10203679",   id:"1196080003832018", rssb6f:25009,  hasard:8336,   rssb8h:33345,  rssb03i:1250,  salBase:416809,  jTrav:31, divTax:0, baseTPR:416809,  tpr:89043,  rssb6o:25009,  rssb03p:1250,  mituel:1508,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:300000,  benefName:"MWEMA Faustin",               bank:"ACCESS BANK",  account:"7002410102628601",    credit:300000},
+  {no:19, nom:"NDAYISENGA",       prenom:"FESTO",              nAffil:"10150531",   id:"1197580010933172", rssb6f:17426,  hasard:5809,   rssb8h:23235,  rssb03i:871,   salBase:290432,  jTrav:31, divTax:0, baseTPR:290432,  tpr:51130,  rssb6o:17426,  rssb03p:871,   mituel:1105,  cotTwis:10000, rembTw:26000,  cotSocial:0, avance:0,     assur:0, salNet:183900,  benefName:"NDAYISENGA FESTO",            bank:"BK Ltd",       account:"000450062187533",     credit:183900},
+  {no:20, nom:"NDUWAYEZU",        prenom:"FRANCOIS",           nAffil:"10421393S",  id:"1198180025304032", rssb6f:32096,  hasard:10699,  rssb8h:42795,  rssb03i:1605,  salBase:534932,  jTrav:31, divTax:0, baseTPR:534932,  tpr:124480, rssb6o:32096,  rssb03p:1605,  mituel:1884,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:374868,  benefName:"NDUWAYEZU FRANCOIS",          bank:"BPR",          account:"403290530111",        credit:374868},
+  {no:21, nom:"NIWEMUJUNI",       prenom:"MICHAEL PAUL",       nAffil:"10460591A",  id:"1197080006087047", rssb6f:38933,  hasard:12978,  rssb8h:51911,  rssb03i:1947,  salBase:648889,  jTrav:31, divTax:0, baseTPR:648889,  tpr:158667, rssb6o:38933,  rssb03p:1947,  mituel:2247,  cotTwis:20000, rembTw:26000,  cotSocial:0, avance:0,     assur:0, salNet:401096,  benefName:"NIWEMUJUNI MICHAEL PAUL",     bank:"BK Ltd",       account:"100072693536",        credit:401096},
+  {no:22, nom:"NIYITEGEKA",       prenom:"Daniel",             nAffil:"19385246N",  id:"1198380001366082", rssb6f:12728,  hasard:4243,   rssb8h:16970,  rssb03i:636,   salBase:212130,  jTrav:31, divTax:0, baseTPR:212130,  tpr:27639,  rssb6o:12728,  rssb03p:636,   mituel:856,   cotTwis:20000, rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:150271,  benefName:"NIYITEGEKA Daniel",           bank:"BK Ltd",       account:"100013457837",        credit:150271},
+  {no:23, nom:"NIYOMUGABO",       prenom:"JEAN DE DIEU",       nAffil:"20689541I",  id:"1199880081078162", rssb6f:20205,  hasard:6735,   rssb8h:26940,  rssb03i:1010,  salBase:336745,  jTrav:31, divTax:0, baseTPR:336745,  tpr:65024,  rssb6o:20205,  rssb03p:1010,  mituel:1253,  cotTwis:50000, rembTw:26000,  cotSocial:0, avance:0,     assur:0, salNet:173254,  benefName:"NIYOMUGABO JEAN DE DIEU",     bank:"NCBA",         account:"2001161010009220",    credit:173254},
+  {no:24, nom:"NIYONSENGA",       prenom:"EZECHIAS",           nAffil:"10139083",   id:"1197380083735367", rssb6f:43752,  hasard:14584,  rssb8h:58335,  rssb03i:2188,  salBase:729193,  jTrav:31, divTax:0, baseTPR:729193,  tpr:182758, rssb6o:43752,  rssb03p:2188,  mituel:2502,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:497993,  benefName:"NIYONSENGA EZECHIAS",         bank:"BPR",          account:"403107128110158",     credit:497993},
+  {no:25, nom:"NSANZINTWALI",     prenom:"JEAN CHRISOSTOME",   nAffil:"10519744G",  id:"1198780183843070", rssb6f:39208,  hasard:13069,  rssb8h:52278,  rssb03i:1960,  salBase:653471,  jTrav:31, divTax:0, baseTPR:653471,  tpr:160041, rssb6o:39208,  rssb03p:1960,  mituel:2261,  cotTwis:50000, rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:400000,  benefName:"NSANZINTWALI JEAN CHRISOSTOME",bank:"BOA",          account:"02810110000",         credit:400000},
+  {no:26, nom:"NTWALI",           prenom:"OLIVIER",            nAffil:"19987147W",  id:"1198580019191034", rssb6f:12161,  hasard:4054,   rssb8h:16215,  rssb03i:608,   salBase:202686,  jTrav:31, divTax:0, baseTPR:202686,  tpr:24806,  rssb6o:12161,  rssb03p:608,   mituel:826,   cotTwis:10000, rembTw:15600,  cotSocial:0, avance:0,     assur:0, salNet:138685,  benefName:"NTWALI OLIVIER",              bank:"I&M BANK",     account:"20067743001",         credit:138685},
+  {no:27, nom:"NYILIMANZI",       prenom:"JEAN DAMASCENE",     nAffil:"10357370T",  id:"1198480029045135", rssb6f:32096,  hasard:10699,  rssb8h:42795,  rssb03i:1605,  salBase:534932,  jTrav:31, divTax:0, baseTPR:534932,  tpr:124480, rssb6o:32096,  rssb03p:1605,  mituel:1884,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:374868,  benefName:"NYILIMANZI JEAN DAMASCENE",   bank:"BK Ltd",       account:"100095586117",        credit:374868},
+  {no:28, nom:"NYIRARUKUNDO",     prenom:"SANDRINE",           nAffil:"11138117N",  id:"1199670171495064", rssb6f:29248,  hasard:9749,   rssb8h:38997,  rssb03i:1462,  salBase:487468,  jTrav:31, divTax:0, baseTPR:487468,  tpr:110240, rssb6o:29248,  rssb03p:1462,  mituel:1733,  cotTwis:60000, rembTw:41600,  cotSocial:0, avance:0,     assur:0, salNet:243185,  benefName:"NYIRARUKUNDO SANDRINE",       bank:"BK Ltd",       account:"100082339568",        credit:243185},
+  {no:29, nom:"SHUMBUSHA",        prenom:"EMMANUEL",           nAffil:"10921940J",  id:"1199380042123127", rssb6f:16908,  hasard:5636,   rssb8h:22543,  rssb03i:845,   salBase:281792,  jTrav:31, divTax:0, baseTPR:281792,  tpr:48538,  rssb6o:16908,  rssb03p:845,   mituel:1078,  cotTwis:15000, rembTw:20700,  cotSocial:0, avance:0,     assur:0, salNet:178724,  benefName:"SHUMBUSHA EMMANUEL",          bank:"EQUITY BANK",  account:"4003111702100",       credit:178724},
+  {no:30, nom:"SIMPUNGA",         prenom:"SYLVESTRE",          nAffil:"10084735",   id:"1196880076947183", rssb6f:17474,  hasard:5825,   rssb8h:23299,  rssb03i:874,   salBase:291237,  jTrav:31, divTax:0, baseTPR:291237,  tpr:51371,  rssb6o:17474,  rssb03p:874,   mituel:1108,  cotTwis:5000,  rembTw:31200,  cotSocial:0, avance:0,     assur:0, salNet:184210,  benefName:"SIMPUNGA SYLVESTRE",          bank:"EQUITY BANK",  account:"4002100377261",       credit:184210},
+  {no:31, nom:"TUYIZERE",         prenom:"JEAN MARIE VIANNEY", nAffil:"10430163F",  id:"1198380170176117", rssb6f:33709,  hasard:11236,  rssb8h:44945,  rssb03i:1685,  salBase:561813,  jTrav:31, divTax:0, baseTPR:561813,  tpr:132544, rssb6o:33709,  rssb03p:1685,  mituel:1969,  cotTwis:20000, rembTw:62400,  cotSocial:0, avance:25000, assur:0, salNet:284506,  benefName:"TUYIZERE JEAN MARIE VIANNEY", bank:"BK Ltd",       account:"000480044894212",     credit:284506},
+  {no:32, nom:"UMUTONI",          prenom:"ROSINE",             nAffil:"11123769B",  id:"1198370024014059", rssb6f:38933,  hasard:12978,  rssb8h:51911,  rssb03i:1947,  salBase:648889,  jTrav:31, divTax:0, baseTPR:648889,  tpr:158667, rssb6o:38933,  rssb03p:1947,  mituel:2247,  cotTwis:40000, rembTw:60000,  cotSocial:0, avance:0,     assur:0, salNet:347096,  benefName:"UMUTONI ROSINE",              bank:"EQUITY BANK",  account:"4004211228992",       credit:347096},
+  {no:33, nom:"UWAYO",            prenom:"JACQUELINE",         nAffil:"10105567",   id:"1197170001881088", rssb6f:72341,  hasard:24114,  rssb8h:96455,  rssb03i:3617,  salBase:1205683, jTrav:31, divTax:0, baseTPR:1205683, tpr:325705, rssb6o:72341,  rssb03p:3617,  mituel:4020,  cotTwis:190000,rembTw:102000, cotSocial:0, avance:0,     assur:0, salNet:508000,  benefName:"UWAYO JACQUELINE",            bank:"ZIGAMA CSS",   account:"0010007060672",       credit:508000},
+  {no:34, nom:"WANDERA",          prenom:"MOSES ANDREW",       nAffil:"20218552V",  id:"A00656770",        rssb6f:72341,  hasard:24114,  rssb8h:96455,  rssb03i:3617,  salBase:1205683, jTrav:31, divTax:0, baseTPR:1205683, tpr:325705, rssb6o:72341,  rssb03p:3617,  mituel:4020,  cotTwis:0,     rembTw:0,      cotSocial:0, avance:0,     assur:0, salNet:800000,  benefName:"WANDERA MOSES ANDREW",        bank:"EQUITY BANK",  account:"4003201303196",       credit:800000}
+];
+
+// ── HELPERS ──────────────────────────────────
+function n(v){ return v ? v.toLocaleString('fr-FR',{maximumFractionDigits:0}) : '0'; }
+function rwf(v){ return n(v) + ' RWF'; }
+
+// ── RENDER TABLE ─────────────────────────────
+function renderTable(data){
+  const tb = document.getElementById('tableBody');
+  tb.innerHTML = '';
+  // totals
+  const T = { rssb6f:0,hasard:0,rssb8h:0,rssb03i:0,salBase:0,jTrav:0,
+              baseTPR:0,tpr:0,rssb6o:0,rssb03p:0,mituel:0,cotTwis:0,
+              rembTw:0,cotSocial:0,avance:0,assur:0,salNet:0,credit:0 };
+
+  data.forEach(e => {
+    const tr = document.createElement('tr');
+    tr.dataset.no = e.no;
+    tr.onclick = () => showCard(e.no);
+    tr.innerHTML = `
+      <td class="center">${e.no}</td>
+      <td class="left" style="font-weight:600;">${e.nom}</td>
+      <td class="left">${e.prenom}</td>
+      <td>${e.nAffil}</td>
+      <td>${e.id}</td>
+      <td class="val-yellow">${n(e.rssb6f)}</td>
+      <td class="val-yellow">${n(e.hasard)}</td>
+      <td class="val-yellow" style="font-weight:600;">${n(e.rssb8h)}</td>
+      <td class="val-red">${n(e.rssb03i)}</td>
+      <td class="val-accent">${n(e.salBase)}</td>
+      <td class="center">${e.jTrav}</td>
+      <td class="center">${e.divTax||'—'}</td>
+      <td class="val-accent" style="font-weight:600;">${n(e.baseTPR)}</td>
+      <td class="val-red">${n(e.tpr)}</td>
+      <td class="val-red">${n(e.rssb6o)}</td>
+      <td class="val-red">${n(e.rssb03p)}</td>
+      <td class="val-red">${n(e.mituel)}</td>
+      <td class="val-red">${e.cotTwis?n(e.cotTwis):'—'}</td>
+      <td class="val-red">${e.rembTw?n(e.rembTw):'—'}</td>
+      <td class="val-red">${e.cotSocial?n(e.cotSocial):'—'}</td>
+      <td class="val-red">${e.avance?n(e.avance):'—'}</td>
+      <td class="val-red">${e.assur?n(e.assur):'—'}</td>
+      <td class="val-purple" style="font-weight:700;">${n(e.salNet)}</td>
+      <td class="left">${e.benefName}</td>
+      <td class="left">${e.bank}</td>
+      <td>${e.account}</td>
+      <td class="val-purple">${n(e.credit)}</td>`;
+    tb.appendChild(tr);
+    Object.keys(T).forEach(k => { if(e[k]) T[k] += e[k]; });
+  });
+
+  // totals row
+  const tr = document.createElement('tr');
+  tr.className = 'total-row';
+  tr.innerHTML = `
+    <td colspan="5" class="left" style="color:var(--muted);font-size:0.78rem;text-transform:uppercase;letter-spacing:.6px;">TOTAL</td>
+    <td class="val-yellow">${n(T.rssb6f)}</td>
+    <td class="val-yellow">${n(T.hasard)}</td>
+    <td class="val-yellow">${n(T.rssb8h)}</td>
+    <td class="val-red">${n(T.rssb03i)}</td>
+    <td class="val-accent">${n(T.salBase)}</td>
+    <td class="center">${n(T.jTrav)}</td>
+    <td>—</td>
+    <td class="val-accent">${n(T.baseTPR)}</td>
+    <td class="val-red">${n(T.tpr)}</td>
+    <td class="val-red">${n(T.rssb6o)}</td>
+    <td class="val-red">${n(T.rssb03p)}</td>
+    <td class="val-red">${n(T.mituel)}</td>
+    <td class="val-red">${n(T.cotTwis)}</td>
+    <td class="val-red">${n(T.rembTw)}</td>
+    <td class="val-red">${n(T.cotSocial)}</td>
+    <td class="val-red">${n(T.avance)}</td>
+    <td class="val-red">${n(T.assur)}</td>
+    <td class="val-purple">${n(T.salNet)}</td>
+    <td colspan="3"></td>
+    <td class="val-purple">${n(T.credit)}</td>`;
+  tb.appendChild(tr);
+}
+
+// ── TPR BRACKETS ─────────────────────────────
+function tprBrackets(base){
+  const rows=[];
+  rows.push({r:'0 – 60,000', amt:Math.min(base,60000), rate:'0%', tax:0});
+  if(base>60000){ const a=Math.min(base,100000)-60000; rows.push({r:'60,001 – 100,000',amt:a,rate:'10%',tax:a*.10}); }
+  if(base>100000){ const a=Math.min(base,200000)-100000; rows.push({r:'100,001 – 200,000',amt:a,rate:'20%',tax:a*.20}); }
+  if(base>200000){ const a=base-200000; rows.push({r:'200,001 – '+n(base),amt:a,rate:'30%',tax:a*.30}); }
+  return rows;
+}
+
+// ── SHOW EMPLOYEE CARD ───────────────────────
+function showCard(no){
+  const e = EMP.find(x=>x.no===no);
+  if(!e) return;
+  const fullName = e.nom.trim()+' '+e.prenom.trim();
+
+  document.getElementById('cardName').textContent = fullName;
+  document.getElementById('cardNetBig').textContent = n(e.salNet)+' RWF';
+  document.getElementById('cardBadges').innerHTML =
+    `<span class="pill pill-blue">N° ${e.no}</span>
+     <span class="pill pill-accent">Affil. ${e.nAffil}</span>
+     <span class="pill pill-green">${e.jTrav} days</span>
+     <span class="pill pill-yellow">Period 5/2026 · SIEGE</span>`;
+
+  // Identity
+  document.getElementById('cardIdentity').innerHTML = `
+    <div class="card-row"><span class="card-label">N°Affil.</span><span class="card-value">${e.nAffil}</span></div>
+    <div class="card-row"><span class="card-label">National ID</span><span class="card-value">${e.id}</span></div>
+    <div class="card-row"><span class="card-label">J.Trav. (working days)</span><span class="card-value">${e.jTrav}</span></div>`;
+
+  // Base
+  document.getElementById('cardBase').innerHTML = `
+    <div class="card-row"><span class="card-label">Sal.Base (col J)</span><span class="card-value">${rwf(e.salBase)}</span></div>
+    <div class="card-row"><span class="card-label">Div.Tax. (col L)</span><span class="card-value">${rwf(e.divTax)}</span></div>
+    <div class="card-row"><span class="card-label"><strong>Base TPR (col M = J+L)</strong></span><span class="card-value total">${rwf(e.baseTPR)}</span></div>`;
+
+  // TPR
+  const bk = tprBrackets(e.baseTPR);
+  const tTotal = bk.reduce((s,b)=>s+b.tax,0);
+  let tprHtml = '<thead><tr><th>Bracket</th><th style="text-align:right">In bracket</th><th>Rate</th><th style="text-align:right">Tax</th></tr></thead><tbody>';
+  bk.forEach(b=>{ tprHtml+=`<tr><td>${b.r}</td><td style="font-family:var(--font-mono);text-align:right">${n(b.amt)}</td><td>${b.rate}</td><td style="font-family:var(--font-mono);text-align:right">${n(b.tax)}</td></tr>`; });
+  tprHtml+=`<tr style="background:rgba(248,113,113,.07);font-weight:700;"><td colspan="3" style="color:var(--red)">Total TPR (col N)</td><td style="font-family:var(--font-mono);text-align:right;color:var(--red)">${rwf(tTotal)}</td></tr></tbody>`;
+  document.getElementById('cardTPR').innerHTML = tprHtml;
+
+  // Deductions
+  const mitelBase = e.baseTPR - e.tpr - e.rssb6o - e.rssb03p;
+  document.getElementById('cardDeductions').innerHTML = `
+    <div class="card-row"><span class="card-label">RSSB 0.3% col I (ref only)</span><span class="card-value" style="color:var(--muted);">${rwf(e.rssb03i)}</span></div>
+    <div class="card-row"><span class="card-label">TPR (col N)</span><span class="card-value deduct">− ${rwf(e.tpr)}</span></div>
+    <div class="card-row"><span class="card-label">RSSB 6% employee pension (col O)</span><span class="card-value deduct">− ${rwf(e.rssb6o)}</span></div>
+    <div class="card-row"><span class="card-label">RSSB 0.3% employee medical (col P)</span><span class="card-value deduct">− ${rwf(e.rssb03p)}</span></div>
+    <div class="card-row"><span class="card-label" style="font-size:0.75rem;">Mituel base = Base_TPR−TPR−RSSB6%−RSSB0.3% = ${rwf(mitelBase)}</span><span class="card-value"></span></div>
+    <div class="card-row"><span class="card-label">Mituel 0.5% (col Q)</span><span class="card-value deduct">− ${rwf(e.mituel)}</span></div>
+    ${e.cotTwis?`<div class="card-row"><span class="card-label">Cot.Twis. (col R)</span><span class="card-value deduct">− ${rwf(e.cotTwis)}</span></div>`:''}
+    ${e.rembTw?`<div class="card-row"><span class="card-label">Remb.Tw. (col S)</span><span class="card-value deduct">− ${rwf(e.rembTw)}</span></div>`:''}
+    ${e.cotSocial?`<div class="card-row"><span class="card-label">Cot.Social (col T)</span><span class="card-value deduct">− ${rwf(e.cotSocial)}</span></div>`:''}
+    ${e.avance?`<div class="card-row"><span class="card-label">Avance (col U)</span><span class="card-value deduct">− ${rwf(e.avance)}</span></div>`:''}
+    ${e.assur?`<div class="card-row"><span class="card-label">Assur. (col V)</span><span class="card-value deduct">− ${rwf(e.assur)}</span></div>`:''}
+    <div class="card-row" style="margin-top:6px;border-top:2px solid var(--border);padding-top:8px;"><span class="card-label"><strong>Sal.Net (col W)</strong></span><span class="card-value net">${rwf(e.salNet)}</span></div>`;
+
+  // Employer
+  document.getElementById('cardEmployer').innerHTML = `
+    <div class="card-row"><span class="card-label">RSSB 6% pension (col F)</span><span class="card-value emp-cost">${rwf(e.rssb6f)}</span></div>
+    <div class="card-row"><span class="card-label">Hasard 2% occupational (col G)</span><span class="card-value emp-cost">${rwf(e.hasard)}</span></div>
+    <div class="card-row"><span class="card-label"><strong>TOTAL RSSB 8% (col H)</strong></span><span class="card-value emp-cost" style="font-weight:700;">${rwf(e.rssb8h)}</span></div>`;
+
+  // Bank
+  document.getElementById('cardBank').innerHTML = `
+    <div class="card-row"><span class="card-label">Beneficiary Name (col AC)</span><span class="card-value bank">${e.benefName}</span></div>
+    <div class="card-row"><span class="card-label">Bank Name (col AD)</span><span class="card-value bank">${e.bank}</span></div>
+    <div class="card-row"><span class="card-label">Account Number (col AE)</span><span class="card-value bank">${e.account}</span></div>
+    <div class="card-row"><span class="card-label"><strong>Credit Amount / col AF</strong></span><span class="card-value net">${rwf(e.credit)}</span></div>`;
+
+  // Highlight table row
+  document.querySelectorAll('#tableBody tr').forEach(r=>r.classList.remove('selected'));
+  const row = document.querySelector(`#tableBody tr[data-no="${no}"]`);
+  if(row){ row.classList.add('selected'); row.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+
+  // Show card
+  document.getElementById('empCard').style.display='block';
+  document.getElementById('empCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function clearCard(){
+  document.getElementById('empCard').style.display='none';
+  document.getElementById('searchInput').value='';
+  document.getElementById('suggestions').style.display='none';
+  document.querySelectorAll('#tableBody tr').forEach(r=>r.classList.remove('selected'));
+}
+
+// ── SEARCH ───────────────────────────────────
+const searchInput = document.getElementById('searchInput');
+const sugBox      = document.getElementById('suggestions');
+
+searchInput.addEventListener('input', function(){
+  const q = this.value.trim().toLowerCase();
+  sugBox.innerHTML='';
+  if(q.length < 1){ sugBox.style.display='none'; return; }
+  const matches = EMP.filter(e =>
+    e.nom.toLowerCase().includes(q) || e.prenom.toLowerCase().includes(q)
+  );
+  if(!matches.length){ sugBox.style.display='none'; return; }
+  matches.slice(0,8).forEach(e=>{
+    const d = document.createElement('div');
+    d.className='sug-item';
+    d.innerHTML=`<span class="sug-name">${e.nom.trim()} ${e.prenom.trim()}</span><span class="sug-net">${n(e.salNet)} RWF</span>`;
+    d.onclick=()=>{ searchInput.value=e.nom.trim()+' '+e.prenom.trim(); sugBox.style.display='none'; showCard(e.no); };
+    sugBox.appendChild(d);
+  });
+  sugBox.style.display='block';
+});
+
+document.addEventListener('click', e=>{ if(!e.target.closest('.search-box')) sugBox.style.display='none'; });
+
+// ── LIVE CALCULATOR ───────────────────────────
+function calcTPR(b){
+  if(b<=60000) return 0;
+  if(b<=100000) return (b-60000)*.10;
+  if(b<=200000) return ((b-100000)*.20)+4000;
+  return ((b-200000)*.30)+24000;
+}
+function calcNet(){
+  const sb = parseFloat(document.getElementById('cSalBase').value)||0;
+  const dt = parseFloat(document.getElementById('cDivTax').value)||0;
+  const ct = parseFloat(document.getElementById('cCotTwis').value)||0;
+  const rt = parseFloat(document.getElementById('cRembTw').value)||0;
+  const cs = parseFloat(document.getElementById('cCotSocial').value)||0;
+  const av = parseFloat(document.getElementById('cAvance').value)||0;
+  const as = parseFloat(document.getElementById('cAssur').value)||0;
+
+  const bTPR  = sb+dt;
+  const tpr   = calcTPR(bTPR);
+  const r6o   = bTPR*.06;
+  const r03p  = bTPR*.003;
+  const mit   = (bTPR-tpr-r6o-r03p)*.005;
+  const net   = Math.round(bTPR-tpr-r6o-r03p-mit-ct-rt-cs-av-as);
+  const r6f   = bTPR*.06;
+  const haz   = bTPR*.02;
+
+  const rows=[
+    {l:'Sal.Base (col J)',v:sb,cls:''},
+    {l:'Div.Tax. (col L)',v:dt,cls:''},
+    {l:'Base TPR (col M)',v:bTPR,cls:'res-hi',bold:true},
+    null,
+    {l:'− TPR (col N)',v:-tpr,cls:'',red:true},
+    {l:'− RSSB 6% employee pension (col O)',v:-r6o,cls:'',red:true},
+    {l:'− RSSB 0.3% employee medical (col P)',v:-r03p,cls:'',red:true},
+    {l:'Mituel base = '+rwf(bTPR-tpr-r6o-r03p),v:null,cls:''},
+    {l:'− Mituel 0.5% (col Q)',v:-mit,cls:'',red:true},
+    ct?{l:'− Cot.Twis. (col R)',v:-ct,cls:'',red:true}:null,
+    rt?{l:'− Remb.Tw. (col S)',v:-rt,cls:'',red:true}:null,
+    cs?{l:'− Cot.Social (col T)',v:-cs,cls:'',red:true}:null,
+    av?{l:'− Avance (col U)',v:-av,cls:'',red:true}:null,
+    as?{l:'− Assur. (col V)',v:-as,cls:'',red:true}:null,
+    null,
+    {l:'Sal.Net (col W) = ROUND(M-N-O-P-Q-R-S-T-U-V, 0)',v:net,cls:'res-net',bold:true},
+    null,
+    {l:'Employer RSSB 6% pension (col F)',v:r6f,cls:'',yel:true},
+    {l:'Employer Hasard 2% (col G)',v:haz,cls:'',yel:true},
+    {l:'Total employer RSSB 8% (col H)',v:r6f+haz,cls:'',yel:true,bold:true},
+  ];
+
+  const t = document.getElementById('resTable');
+  t.innerHTML='';
+  rows.forEach(r=>{
+    if(!r){ const tr=document.createElement('tr'); tr.innerHTML='<td colspan="2" style="padding:3px 12px;"><hr style="border-color:var(--border)"></td>'; t.appendChild(tr); return; }
+    if(r.v===null){ const tr=document.createElement('tr'); tr.innerHTML=`<td colspan="2" style="font-size:0.75rem;color:var(--muted);padding:4px 12px;">${r.l}</td>`; t.appendChild(tr); return; }
+    const tr=document.createElement('tr');
+    if(r.cls) tr.className=r.cls;
+    const col=r.yel?'color:var(--yellow)':r.red?'color:var(--red)':'';
+    const sign=r.v<0?'− ':'';
+    tr.innerHTML=`<td>${r.bold?'<strong>':''} ${r.l}${r.bold?'</strong>':''}</td><td style="${col};${r.bold?'font-size:0.95rem;':''}">${sign}${n(Math.abs(r.v))} RWF</td>`;
+    t.appendChild(tr);
+  });
+  document.getElementById('calcResult').classList.add('visible');
+}
+function resetCalc(){
+  ['cSalBase','cDivTax','cCotTwis','cRembTw','cCotSocial','cAvance','cAssur'].forEach(id=>{
+    document.getElementById(id).value= id==='cDivTax'?'0':'';
+  });
+  document.getElementById('calcResult').classList.remove('visible');
+}
+
+// ── INIT ──────────────────────────────────────
+renderTable(EMP);
+</script>
+</body>
+</html>
